@@ -36,7 +36,7 @@ const loadVideoDetails = (
   );
 };
 
-const VideoPreview = ({ videoId }: { videoId: string }) => {
+const userVideoDetails = (videoId: string) => {
   const [videoDetails, setVideoDetails] = React.useState<
     VideoDetails | StreamDetails
   >();
@@ -45,28 +45,60 @@ const VideoPreview = ({ videoId }: { videoId: string }) => {
     loadVideoDetails(videoId).then((vd) => setVideoDetails(vd));
   }, []);
 
+  return videoDetails;
+};
+
+const VideoPreviewImage = ({
+  videoDetails,
+}: {
+  videoDetails: VideoDetails;
+}) => {
+  return (
+    <img
+      style={{ width: "200px", borderRadius: "10px", border: "1px solid" }}
+      src={videoDetails.previewUrl}
+      alt={"video-preview"}
+    />
+  );
+};
+
+const VideoDescription = ({
+  videoDetails,
+}: {
+  videoDetails: VideoDetails | StreamDetails;
+}) => {
+  return (
+    <>
+      <div style={{ fontWeight: "bold" }}>{videoDetails.title}</div>
+      <div style={{ color: "#808080" }}>{videoDetails.author}</div>
+      {"watching" in videoDetails && (
+        <>
+          <div style={{ color: "#808080" }}>
+            {videoDetails.watching} watching
+          </div>
+          <span style={{ color: "white", background: "red", padding: "3px" }}>
+            live
+          </span>
+        </>
+      )}
+    </>
+  );
+};
+
+const Loader = ({}) => <span>{"loading..."}</span>;
+
+const VideoPreview = ({ videoId }: { videoId: string }) => {
+  const videoDetails = userVideoDetails(videoId);
+
   return videoDetails ? (
     <div style={{ display: "flex" }}>
-      <img
-        style={{ width: "200px", borderRadius: "10px", border: "1px solid" }}
-        src={videoDetails.previewUrl}
-        alt={"video-preview"}
-      />
+      <VideoPreviewImage videoDetails={videoDetails} />
       <div style={{ paddingLeft: "10px" }}>
-        <div style={{ fontWeight: "bold" }}>{videoDetails.title}</div>
-        <div style={{ color: "#808080" }}>{videoDetails.author}</div>
-        {"watching" in videoDetails && (
-          <>
-            <div style={{}}>{videoDetails.watching}</div>
-            <span style={{ color: "white", background: "red", padding: "3px" }}>
-              live
-            </span>
-          </>
-        )}
+        <VideoDescription videoDetails={videoDetails} />
       </div>
     </div>
   ) : (
-    <span>{"loading..."}</span>
+    <Loader />
   );
 };
 
