@@ -87,18 +87,36 @@ const VideoDescription = ({
 
 const Loader = ({}) => <span>{"loading..."}</span>;
 
-const VideoPreview = ({ videoId }: { videoId: string }) => {
-  const videoDetails = userVideoDetails(videoId);
+type VideoPreviewProps = {
+  videoId: string;
+  videoDetailsGetter?: typeof userVideoDetails;
+  ImagePreviewComponent?: React.FunctionComponent<{
+    videoDetails: VideoDetails;
+  }>;
+  DescriptionComponent?: React.FunctionComponent<{
+    videoDetails: VideoDetails;
+  }>;
+  LoaderComponent?: React.FunctionComponent<{}>;
+};
+
+const VideoPreview = ({
+  videoId,
+  videoDetailsGetter = userVideoDetails,
+  ImagePreviewComponent = VideoPreviewImage,
+  DescriptionComponent = VideoDescription,
+  LoaderComponent = Loader,
+}: VideoPreviewProps) => {
+  const videoDetails = videoDetailsGetter(videoId);
 
   return videoDetails ? (
     <div style={{ display: "flex" }}>
-      <VideoPreviewImage videoDetails={videoDetails} />
+      <ImagePreviewComponent videoDetails={videoDetails} />
       <div style={{ paddingLeft: "10px" }}>
-        <VideoDescription videoDetails={videoDetails} />
+        <DescriptionComponent videoDetails={videoDetails} />
       </div>
     </div>
   ) : (
-    <Loader />
+    <LoaderComponent />
   );
 };
 
@@ -107,7 +125,7 @@ function App() {
     <div style={{ display: "flex", flexDirection: "column" }}>
       <VideoPreview videoId={"testVideo"} />
       <br />
-      <VideoPreview videoId={"teststream"} />
+      {/* <VideoPreview videoId={"teststream"} /> */}
     </div>
   );
 }
