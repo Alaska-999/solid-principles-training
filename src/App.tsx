@@ -70,38 +70,41 @@ const useStreamDetails = (videoId: string): StreamDetails => {
   return streamDetails;
 };
 
-const VideoPreviewImage = ({
-  videoDetails,
-}: {
-  videoDetails: VideoDetails;
-}) => {
+type VideoPreviewImageProps = Pick<VideoDetails, "previewUrl">;
+
+const VideoPreviewImage = ({ previewUrl }: VideoPreviewImageProps) => {
   return (
     <img
       style={{ width: "200px", borderRadius: "10px", border: "1px solid" }}
-      src={videoDetails.previewUrl}
+      src={previewUrl}
       alt={"video-preview"}
     />
   );
 };
 
-const VideoDescription = ({ videoDetails }: { videoDetails: VideoDetails }) => {
+type VideoDescriptionProps = Pick<VideoDetails, "title" | "author">;
+
+const VideoDescription = ({ title, author }: VideoDescriptionProps) => {
   return (
     <>
-      <div style={{ fontWeight: "bold" }}>{videoDetails.title}</div>
-      <div style={{ color: "#808080" }}>{videoDetails.author}</div>
+      <div style={{ fontWeight: "bold" }}>{title}</div>
+      <div style={{ color: "#808080" }}>{author}</div>
     </>
   );
 };
 
+type StreamDescriptionImageProps = VideoDescriptionProps &
+  Pick<StreamDetails, "watching">;
+
 const StreamDescriprion = ({
-  videoDetails,
-}: {
-  videoDetails: StreamDetails;
-}) => {
+  title,
+  author,
+  watching,
+}: StreamDescriptionImageProps) => {
   return (
     <>
-      <VideoDescription videoDetails={videoDetails} />
-      <div style={{ color: "#808080" }}>{videoDetails.watching} watching</div>
+      <VideoDescription title={title} author={author} />
+      <div style={{ color: "#808080" }}>{watching} watching</div>
       <span style={{ color: "white", background: "red", padding: "3px" }}>
         live
       </span>
@@ -114,8 +117,8 @@ const Loader = ({}) => <span>{"loading..."}</span>;
 // (anything that extends VideoDetails)
 type VideoPreviewProps<T extends VideoDetails> = {
   videoId: string;
-  ImagePreviewComponent?: React.FunctionComponent<{ videoDetails: T }>;
-  DescriptionComponent?: React.FunctionComponent<{ videoDetails: T }>;
+  renderImagePreviewComponent?: (video: T) => React.ReactElement;
+  renderDescriptionComponent?: (video: T) => React.ReactElement;
   LoaderComponent?: React.FunctionComponent<{}>;
 };
 
@@ -124,17 +127,21 @@ const getVideoPreview =
   <T extends VideoDetails>(videoDetailsGetter: (videoId: string) => T) =>
   ({
     videoId,
-    ImagePreviewComponent = VideoPreviewImage,
-    DescriptionComponent = VideoDescription,
+    renderImagePreviewComponent = (video) => (
+      <VideoPreviewImage previewUrl={video.previewUrl} />
+    ),
+    renderDescriptionComponent = (video) => (
+      <VideoDescription title={video.title} author={video.author} />
+    ),
     LoaderComponent = Loader,
   }: VideoPreviewProps<T>) => {
     const videoDetails = videoDetailsGetter(videoId);
 
     return videoDetails ? (
       <div style={{ display: "flex" }}>
-        <ImagePreviewComponent videoDetails={videoDetails} />
+        {renderImagePreviewComponent(videoDetails)}
         <div style={{ paddingLeft: "10px" }}>
-          <DescriptionComponent videoDetails={videoDetails} />
+          {renderDescriptionComponent(videoDetails)}
         </div>
       </div>
     ) : (
@@ -152,7 +159,7 @@ function App() {
       <br />
       <StreamPreview
         videoId={"teststream"}
-        DescriptionComponent={StreamDescriprion}
+        renderDescriptionComponent={video =>  <StreamDescriprion {...video}/>}
       />
     </div>
   );
