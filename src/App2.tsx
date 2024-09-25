@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import "./App.css";
 
 type VideoDetails = {
@@ -111,75 +112,57 @@ const StreamDescriprion = ({
   );
 };
 
-const Loader = () => <span>{"loading..."}</span>;
+const Loader = ({}) => <span>{"loading..."}</span>;
 
 // (anything that extends VideoDetails)
 type VideoPreviewProps<T extends VideoDetails> = {
-  videoDetails: T;
+  videoId: string;
   renderImagePreviewComponent?: (video: T) => React.ReactElement;
   renderDescriptionComponent?: (video: T) => React.ReactElement;
+  LoaderComponent?: React.FunctionComponent<{}>;
 };
 
-const VideoPreviewTemplate = <T extends VideoDetails>({
-  videoDetails,
-  renderImagePreviewComponent = (video) => (
-    <VideoPreviewImage previewUrl={video.previewUrl} />
-  ),
-  renderDescriptionComponent = (video) => (
-    <VideoDescription title={video.title} author={video.author} />
-  ),
-}: VideoPreviewProps<T>) => {
-  return (
-    <div style={{ display: "flex" }}>
-      {renderImagePreviewComponent(videoDetails)}
-      <div style={{ paddingLeft: "10px" }}>
-        {renderDescriptionComponent(videoDetails)}
+//HOC - gets function and returns component
+const getVideoPreview =
+  <T extends VideoDetails>(videoDetailsGetter: (videoId: string) => T) =>
+  ({
+    videoId,
+    renderImagePreviewComponent = (video) => (
+      <VideoPreviewImage previewUrl={video.previewUrl} />
+    ),
+    renderDescriptionComponent = (video) => (
+      <VideoDescription title={video.title} author={video.author} />
+    ),
+    LoaderComponent = Loader,
+  }: VideoPreviewProps<T>) => {
+    const videoDetails = videoDetailsGetter(videoId);
+
+    return videoDetails ? (
+      <div style={{ display: "flex" }}>
+        {renderImagePreviewComponent(videoDetails)}
+        <div style={{ paddingLeft: "10px" }}>
+          {renderDescriptionComponent(videoDetails)}
+        </div>
       </div>
-    </div>
-  );
-};
+    ) : (
+      <LoaderComponent />
+    );
+  };
 
-const SelfLoadingVideoPreview = <T extends VideoDetails>({
-  videoId,
-  useVideoDetails,
-  LoaderComponent = Loader,
-  renderVideoPreview = (video) => <VideoPreviewTemplate videoDetails={video} />,
-}: {
-  useVideoDetails: (videoId: string) => T;
-  videoId: string;
-  LoaderComponent?: React.FunctionComponent;
-  renderVideoPreview?: (video: T) => React.ReactElement;
-}) => {
-  const videoDetails = useVideoDetails(videoId);
-
-  return videoDetails ? renderVideoPreview(videoDetails) : <LoaderComponent />;
-};
-
-const loadData = () =>
-  Promise.all([loadVideoDetails("testVideo"), loadStreamDetails("teststream")]);
+const VideoPreview = getVideoPreview(useVideoDetails);
+const StreamPreview = getVideoPreview(useStreamDetails);
 
 function App() {
-  const [videos, setVideos] = React.useState<VideoDetails[]>([]);
-  React.useEffect(() => {
-    loadData().then((data) => setVideos(data));
-  }, []);
-
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      {videos.map((video) => {
-        if ("watching" in video) {
-          return (
-            <VideoPreviewTemplate
-              videoDetails={video as StreamDetails}
-              renderDescriptionComponent={(video) => (
-                <StreamDescriprion {...video} />
-              )}
-            />
-          );
-        }
-
-        return <VideoPreviewTemplate videoDetails={video} />;
-      })}
+      <VideoPreview videoId={"testVideo"} />
+      <br />
+      <StreamPreview
+        videoId={"teststream"}
+        renderDescriptionComponent={(video) => <StreamDescriprion {...video} />}
+      />
     </div>
   );
 }
+
+export default App;
